@@ -1,0 +1,13 @@
+.Tilt-Element {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    width: 100px;
+    height: 100px;
+    color: white;
+    border-radius: 20px;
+    transform-style: preserve-3d;
+    background: linear-gradient(89deg, #FF5EDF 0%, #04C8DE 100%);
+}
