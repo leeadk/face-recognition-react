@@ -8,10 +8,6 @@
   justify-content: center;
 }
 
-.particles-bg {
-  position: fixed;
-}
-
 .App-logo {
   height: 40vmin;
   pointer-events: none;
