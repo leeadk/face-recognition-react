@@ -6,6 +6,8 @@ import Logo from './components/Logo/Logo.js';
 import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm.js';
 import Rank from './components/Rank/Rank.js';
 import FaceRecognition from './components/FaceRecognition/FaceRecognition.js';
+import SignIn from './components/SignIn/SignIn.js';
+import Register from './components/Register/Register.js';
 
 import './App.css';
 
@@ -16,15 +18,51 @@ class App extends Component {
     this.state = {
       input: '',
       imageUrl: '',
-      box: {}
+      box: {},
+      route: 'signin',
+      isSignedIn: false,
     }
+  }
+
+
+  render() {
+    const { isSignedIn, imageUrl, route, box } = this.state;
+    return (
+      <div className="App" >
+        <ParticlesBackground />
+        <Navigation isSignedIn={isSignedIn} onRouteChange={this.onRouteChange} />
+        {
+          route === 'home' ?
+            <div>
+              <Logo />
+              <Rank />
+              <ImageLinkForm onInputChange={this.onInputChange} onButtonSubmit={this.onButtonSubmit} />
+              <FaceRecognition box={box} imageUrl={imageUrl} />
+            </div>
+            :
+            route === 'signin' ?
+              <SignIn onRouteChange={this.onRouteChange} />
+              :
+              <Register onRouteChange={this.onRouteChange} />
+        }
+      </div>
+    );
+  }
+
+  onRouteChange = (newRoute) => {
+    if (newRoute === 'signout') {
+      this.setState({ isSignedIn: false });
+    }
+    else if (newRoute === 'home') {
+      this.setState({ isSignedIn: true });
+    }
+    this.setState({ route: newRoute });
   }
 
   accessFaceRecognition = () => {
     const USER_ID = 'leeadk';
     const PAT = 'd8a1d92761054a80a514a614fbb3960b';
     const APP_ID = 'clarifai-react';
-    const IMAGE_URL = 'https://samples.clarifai.com/metro-north.jpg';
     const MODEL_ID = 'face-detection';
     const MODEL_VERSION_ID = '45fb9a671625463fa646c3523a3087d5';
 
@@ -86,20 +124,6 @@ class App extends Component {
   }
 
 
-  render() {
-    return (
-      <div className="App" >
-        <ParticlesBackground />
-        <Navigation />
-        <Logo />
-        <Rank />
-        <ImageLinkForm
-          onInputChange={this.onInputChange}
-          onButtonSubmit={this.onButtonSubmit} />
-        <FaceRecognition box={this.state.box} imageUrl={this.state.imageUrl} />
-      </div>
-    );
-  }
 }
 
 export default App;

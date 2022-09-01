@@ -5,7 +5,7 @@ import { loadFull } from "tsparticles";
 const particlesOptions = {
     fullScreen: {
         enable: true,
-        zIndex: 0,
+        zIndex: -1,
     },
     fpsLimit: 120,
     particles: {
@@ -24,7 +24,7 @@ const particlesOptions = {
             enable: true,
         },
         number: {
-            value: 50,
+            value: 120,
             density: {
                 enable: false,
                 area: 800,
