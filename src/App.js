@@ -23,13 +23,28 @@ class App extends Component {
       isSignedIn: false,
     }
   }
-
-
+  /*
+    componentDidMount() {
+      this.callBackendAPI()
+        .then(res => console.log(res))
+        .catch(err => console.log(err));
+    }
+  
+    callBackendAPI = async () => {
+      const response = await fetch('/');
+      const body = await response.json();
+  
+      if (response.status !== 200) {
+        throw Error(body.message) 
+      }
+      return body;
+    };
+    */
   render() {
     const { isSignedIn, imageUrl, route, box } = this.state;
     return (
       <div className="App" >
-        <ParticlesBackground />
+        {/*<ParticlesBackground />*/}
         <Navigation isSignedIn={isSignedIn} onRouteChange={this.onRouteChange} />
         {
           route === 'home' ?
