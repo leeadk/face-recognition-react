@@ -11,22 +11,30 @@ import Register from './components/Register/Register.js';
 
 import './App.css';
 
+const initialState = {
+  input: '',
+  imgUrl: '',
+  imgBoxes: [],
+  route: 'home',
+  isSignedIn: false,
+  user: {
+    id: '',
+    name: '',
+    email: '',
+    entries: '',
+    joined: ''
+  }
+};
+
 
 class App extends Component {
   constructor() {
     super();
-    this.state = {
-      input: '',
-      imageUrl: '',
-      box: {},
-      route: 'signin',
-      isSignedIn: false,
-    }
+    this.state = initialState;
   }
 
-
   render() {
-    const { isSignedIn, imageUrl, route, box } = this.state;
+    const { isSignedIn, imgUrl, route, imgBoxes } = this.state;
     return (
       <div className="App" >
         <ParticlesBackground />
@@ -34,16 +42,16 @@ class App extends Component {
         {
           route === 'home' ?
             <div>
-              <Logo />
-              <Rank />
-              <ImageLinkForm onInputChange={this.onInputChange} onButtonSubmit={this.onButtonSubmit} />
-              <FaceRecognition box={box} imageUrl={imageUrl} />
+              <Logo isSignedIn={isSignedIn} />
+              <Rank username={this.state.user.name} entries={this.state.user.entries} isSignedIn={this.state.isSignedIn} />
+              <ImageLinkForm onInputChange={this.onInputChange} onImageSubmit={this.onImageSubmit} />
+              <FaceRecognition imgBoxes={imgBoxes} imgUrl={imgUrl} />
             </div>
             :
             route === 'signin' ?
-              <SignIn onRouteChange={this.onRouteChange} />
+              <SignIn onRouteChange={this.onRouteChange} loadUser={this.loadUser} />
               :
-              <Register onRouteChange={this.onRouteChange} />
+              <Register onRouteChange={this.onRouteChange} loadUser={this.loadUser} />
         }
       </div>
     );
@@ -51,79 +59,72 @@ class App extends Component {
 
   onRouteChange = (newRoute) => {
     if (newRoute === 'signout') {
-      this.setState({ isSignedIn: false });
-    }
-    else if (newRoute === 'home') {
-      this.setState({ isSignedIn: true });
+      this.setState(initialState);
     }
     this.setState({ route: newRoute });
   }
 
-  accessFaceRecognition = () => {
-    const USER_ID = 'leeadk';
-    const PAT = 'd8a1d92761054a80a514a614fbb3960b';
-    const APP_ID = 'clarifai-react';
-    const MODEL_ID = 'face-detection';
-    const MODEL_VERSION_ID = '45fb9a671625463fa646c3523a3087d5';
-
-    const requestJson = JSON.stringify({
-      "user_app_id": {
-        "user_id": USER_ID,
-        "app_id": APP_ID
-      },
-      "inputs": [
-        {
-          "data": {
-            "image": {
-              "url": this.state.imageUrl
-            }
-          }
-        }
-      ]
-    });
-
-    const requestOptions = {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Key ' + PAT
-      },
-      body: requestJson
-    };
-
-    fetch("https://api.clarifai.com/v2/models/" + MODEL_ID + "/versions/" + MODEL_VERSION_ID + "/outputs", requestOptions)
-      .then(response => response.text())
-      .then(data => this.calculateFaceLocation(JSON.parse(data)))
-      .catch(error => console.log('error', error));
-  }
-
-  calculateFaceLocation = async (data) => {
-    const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
-    const image = document.getElementById('inputimage');
-    const width = Number(image.width);
-    const height = Number(image.height);
-    const boxResult = {
-      leftColumn: clarifaiFace.left_col * width,
-      topRow: clarifaiFace.top_row * height,
-      rightColumn: width - (clarifaiFace.right_col * width),
-      bottomRow: height - (clarifaiFace.bottom_row * height),
+  loadUser = (loggedUser) => {
+    if (this.state.isSignedIn) {
+      return;
     }
-    this.displayFaceBox(boxResult);
+    this.setState({
+      user: {
+        id: loggedUser.id,
+        name: loggedUser.name,
+        email: loggedUser.email,
+        entries: loggedUser.entries,
+        joined: loggedUser.created_on
+      },
+      isSignedIn: true
+    })
   }
 
-  displayFaceBox = (data) => {
-    this.setState({ box: data });
+
+  calculateFaceLocation = async (clarifaiFace) => {
+    if (this.state.isSignedIn) {
+      const image = document.getElementById('inputimage');
+      const width = Number(image.width);
+      const height = Number(image.height);
+      let boxResult = []
+      clarifaiFace.forEach(box => {
+        boxResult.push({
+          leftColumn: box.left_col * width,
+          topRow: box.top_row * height,
+          rightColumn: width - (box.right_col * width),
+          bottomRow: height - (box.bottom_row * height),
+        });
+      });
+      console.log(boxResult);
+      this.setState({ imgBoxes: boxResult });
+    }
   }
+
   onInputChange = async (event) => {
     await this.setState({ input: event.target.value })
   }
 
-  onButtonSubmit = async () => {
-    await this.setState({ imageUrl: this.state.input })
-    this.accessFaceRecognition();
+  onImageSubmit = async () => {
+    const oldBoxes = document.getElementsByClassName('bounding-box');
+    while (oldBoxes.length > 0) {
+      oldBoxes[0].parentNode.removeChild(oldBoxes[0]);
+    }
+    await this.setState({ imgUrl: this.state.input })
+    fetch('http://localhost:5000/image', {
+      method: 'put',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: this.state.user.id,
+        img: this.state.imgUrl
+      })
+    }).then(response => response.json())
+      .then(jsonRes => JSON.parse(jsonRes))
+      .then(data => {
+        this.calculateFaceLocation(data.imgBoxes);
+        this.setState({ entries: data.entries });
+      })
+      .catch(err => console.log('ERROR:', err));
+
   }
-
-
 }
-
 export default App;
