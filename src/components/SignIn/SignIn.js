@@ -4,34 +4,41 @@ class SignIn extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            signInEmail: '',
-            signInPassword: ''
+            email: '',
+            password: ''
         }
     }
 
     onEmailChange = (event) => {
-        this.setState({ signInEmail: event.target.value });
+        this.setState({ email: event.target.value });
     }
 
     onPasswordChange = (event) => {
-        this.setState({ signInPassword: event.target.value });
+        this.setState({ password: event.target.value });
     }
 
-    onSubmit = () => {
-        const signInData = {
-            email: this.state.signInEmail,
-            password: this.state.signInPassword
-        }
+    onSignInSubmit = () => {
         const requestOptions = {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(signInData),
+            body: JSON.stringify({
+                email: this.state.email,
+                password: this.state.password
+            }),
         }
         fetch('http://localhost:5000/signin', requestOptions)
-            .then(response => response.json()).catch(err => console.log('error', err))
-            .then(user => console.log(user));
+            .then(response => response.json()).then((user) => {
+                if (user.id) {
+                    this.props.loadUser(user);
+                    this.props.onRouteChange('home');
+                }
+                else {
+                    // error
+                }
+            }
+            ).catch(err => console.log('error', err));
     }
 
 
@@ -46,17 +53,23 @@ class SignIn extends Component {
                             <div className="mt3">
                                 <label className="db fw6 lh-copy f6" name="email-address">Email</label>
                                 <input className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
-                                    type="email" name="email-address" id="email-address" onChange={this.onEmailChange} />
+                                    type="email"
+                                    name="email-address"
+                                    id="email-address"
+                                    onChange={this.onEmailChange} />
                             </div>
                             <div className="mv3">
-                                <label className="db fw6 lh-copy f6" name="password">Password</label>
-                                <input className="b pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
-                                    type="password" name="password" id="password" onChange={this.onPasswordChange} />
+                                <label className="db fw6 lh-copy f6" name="pass">Password</label>
+                                <input className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
+                                    type="pass"
+                                    name="pass"
+                                    id="pass"
+                                    onChange={this.onPasswordChange} />
                             </div>
                         </fieldset>
                         <div>
                             <input
-                                onClick={this.onSubmit}
+                                onClick={this.onSignInSubmit}
                                 className="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f6 dib"
                                 type="button"
                                 value="Sign in"
