@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Typewriter from 'typewriter-effect/dist/core';
 
 class Register extends Component {
     constructor(props) {
@@ -22,7 +23,14 @@ class Register extends Component {
         this.setState({ password: event.target.value });
     }
 
-    onRegisterSubmit = () => {
+    onRegisterSubmit = async () => {
+        if (!this.validateForm()) {
+            new Typewriter('#typewriter', {
+                strings: 'Fill the entire form',
+                autoStart: true,
+            });
+            return;
+        }
         const { onRouteChange } = this.props;
         const requestOptions = {
             method: 'POST',
@@ -30,23 +38,45 @@ class Register extends Component {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                name: this.state.name,
-                email: this.state.email,
-                password: this.state.password,
+                name: this.state.name.trim(),
+                email: this.state.email.trim(),
+                password: this.state.password.trim(),
             }),
         }
-        fetch('http://localhost:5000/register', requestOptions)
-            .then(response => response.json()).catch(err => console.log('error', err))
-            .then(() => onRouteChange('signin'));
+        const response = await fetch('http://localhost:5000/register', requestOptions).catch(err => {
+            new Typewriter('#typewriter', {
+                strings: 'Server unreachable',
+                autoStart: true,
+            });
+        });
+        const json = await response.json();
+        if (!response.ok) {
+            new Typewriter('#typewriter', {
+                strings: json,
+                autoStart: true,
+            });
+            return;
+        }
+        onRouteChange('signin');
+    }
+
+    validateForm = () => {
+        const { name, email, password } = this.state;
+        if (name.trim().length && email.trim().length && password.trim().length) {
+            return true;
+
+        }
+        return false;
     }
 
     render() {
         return (
             <article className="br3 ba dark-gray b--black-10 mv4 w-100 w-50-m w-25-l mw6 shadow-5 center">
                 <main className="pa4 black-80">
-                    <form className="measure">
+                    <form id="registerForm" className="measure">
                         <fieldset id="sign_up" className="ba b--transparent ph0 mh0">
                             <legend className="f1 fw6 ph0 mh0">Register</legend>
+                            <div id='typewriter' />
                             <div className="mt3">
                                 <label className="db fw6 lh-copy f6" name="name" type="text" id="name">Name</label>
                                 <input className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
@@ -64,8 +94,7 @@ class Register extends Component {
                                     id="email-address" />
                             </div>
                             <div className="mv3">
-                                <label className="db fw6 lh-copy f6"
-                                    name="password">Password</label>
+                                <label className="db fw6 lh-copy f6" name="password">Password</label>
                                 <input className="b pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
                                     onChange={this.onPasswordChange}
                                     type="password"
@@ -73,13 +102,14 @@ class Register extends Component {
                                     id="password" />
                             </div>
                         </fieldset>
-                        <div className="">
+                        <div>
                             <input
                                 onClick={this.onRegisterSubmit}
                                 className="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f6 dib"
                                 type="button"
                                 value="Register"
                             />
+
                         </div>
                     </form>
                 </main>
