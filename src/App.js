@@ -40,12 +40,12 @@ class App extends Component {
         <ParticlesBackground />
         <Navigation isSignedIn={isSignedIn} onRouteChange={this.onRouteChange} />
         {
-          route === 'home' ?
+          route === 'home' && this.state.isSignedIn ?
             <div>
-              <Logo isSignedIn={isSignedIn} />
+              <Logo />
               <Rank username={this.state.user.name} entries={this.state.user.entries} isSignedIn={this.state.isSignedIn} />
               <ImageLinkForm onInputChange={this.onInputChange} onImageSubmit={this.onImageSubmit} />
-              <FaceRecognition imgBoxes={imgBoxes} imgUrl={imgUrl} />
+              <FaceRecognition imgBoxes={this.state.imgBoxes} imgUrl={this.state.imgUrl} />
             </div>
             :
             route === 'signin' ?
@@ -77,17 +77,18 @@ class App extends Component {
         joined: loggedUser.created_on
       },
       isSignedIn: true
-    })
+    });
+    this.onRouteChange('home');
   }
 
 
-  calculateFaceLocation = async (clarifaiFace) => {
+  calculateFaceLocation = async (faces) => {
     if (this.state.isSignedIn) {
       const image = document.getElementById('inputimage');
       const width = Number(image.width);
       const height = Number(image.height);
       let boxResult = []
-      clarifaiFace.forEach(box => {
+      faces.forEach(box => {
         boxResult.push({
           leftColumn: box.left_col * width,
           topRow: box.top_row * height,
@@ -95,8 +96,7 @@ class App extends Component {
           bottomRow: height - (box.bottom_row * height),
         });
       });
-      console.log(boxResult);
-      this.setState({ imgBoxes: boxResult });
+      await this.setState({ imgBoxes: boxResult });
     }
   }
 
@@ -105,10 +105,6 @@ class App extends Component {
   }
 
   onImageSubmit = async () => {
-    const oldBoxes = document.getElementsByClassName('bounding-box');
-    while (oldBoxes.length > 0) {
-      oldBoxes[0].parentNode.removeChild(oldBoxes[0]);
-    }
     await this.setState({ imgUrl: this.state.input })
     fetch('http://localhost:5000/image', {
       method: 'put',
@@ -121,10 +117,9 @@ class App extends Component {
       .then(jsonRes => JSON.parse(jsonRes))
       .then(data => {
         this.calculateFaceLocation(data.imgBoxes);
-        this.setState({ entries: data.entries });
+        this.setState({ user: { ...this.state.user, entries: data.entries } });
       })
       .catch(err => console.log('ERROR:', err));
-
   }
 }
 export default App;

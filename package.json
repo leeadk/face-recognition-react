@@ -12,10 +12,10 @@
     "react-dom": "^18.2.0",
     "react-parallax-tilt": "^1.7.58",
     "react-scripts": "^5.0.1",
-    "react-toastify": "^9.0.8",
     "react-tsparticles": "^2.2.3",
     "tachyons": "^4.12.0",
     "tsparticles": "^2.2.3",
+    "typewriter-effect": "^2.19.0",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

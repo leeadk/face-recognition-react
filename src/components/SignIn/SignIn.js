@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Typewriter from 'typewriter-effect/dist/core';
 
 class SignIn extends Component {
     constructor(props) {
@@ -17,7 +18,14 @@ class SignIn extends Component {
         this.setState({ password: event.target.value });
     }
 
-    onSignInSubmit = () => {
+    onSignInSubmit = async () => {
+        if (!this.validateForm()) {
+            new Typewriter('#typewriter', {
+                strings: 'Fill the entire form',
+                autoStart: true,
+            });
+            return;
+        }
         const requestOptions = {
             method: 'POST',
             headers: {
@@ -28,28 +36,40 @@ class SignIn extends Component {
                 password: this.state.password
             }),
         }
-        fetch('http://localhost:5000/signin', requestOptions)
-            .then(response => response.json()).then((user) => {
-                if (user.id) {
-                    this.props.loadUser(user);
-                    this.props.onRouteChange('home');
-                }
-                else {
-                    // error
-                }
-            }
-            ).catch(err => console.log('error', err));
+        const response = await fetch('http://localhost:5000/signin', requestOptions).catch(err => {
+            new Typewriter('#typewriter', {
+                strings: 'Server unreachable',
+                autoStart: true,
+            });
+        });
+        const json = await response.json();
+        if (!response.ok) {
+            new Typewriter('#typewriter', {
+                strings: json,
+                autoStart: true,
+            });
+            return;
+        }
+        this.props.loadUser(json);
     }
 
+    validateForm = () => {
+        const { email, password } = this.state;
+        if (email.trim().length && password.trim().length) {
+            return true;
+        }
+        return false;
+    }
 
     render() {
         const { onRouteChange } = this.props;
         return (
-            <article className="br3 ba dark-gray b--black-10 mv4 w-100 w-50-m w-25-l mw6 shadow-5 center">
+            <article className="br3 ba dark-gray b--black-10 mv4 w-100 w-50-m w-25-l mw6 shadow-5 center" >
                 <main className="pa4 black-80">
                     <form className="measure">
                         <fieldset id="sign_up" className="ba b--transparent ph0 mh0">
                             <legend className="f1 fw6 ph0 mh0">Sign In</legend>
+                            <div id='typewriter' />
                             <div className="mt3">
                                 <label className="db fw6 lh-copy f6" name="email-address">Email</label>
                                 <input className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
